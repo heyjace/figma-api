@@ -1,23 +1,19 @@
 const { Pool, neonConfig } = require('@neondatabase/serverless');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 neonConfig.fetchConnectionCache = true;
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
 module.exports = async (req, res) => {
-  if (req.method === 'OPTIONS') {
-    res.status(200).set(corsHeaders).end();
-    return;
-  }
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -45,7 +41,6 @@ module.exports = async (req, res) => {
 
     const user = result.rows[0];
     
-    const bcrypt = require('bcrypt');
     const validPassword = await bcrypt.compare(password, user.password);
     
     if (!validPassword) {
