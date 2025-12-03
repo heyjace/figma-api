@@ -3,12 +3,6 @@ const Anthropic = require('@anthropic-ai/sdk');
 
 neonConfig.fetchConnectionCache = true;
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
 async function verifyToken(token) {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   
@@ -37,16 +31,15 @@ async function getContentStandards() {
 }
 
 module.exports = async (req, res) => {
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle preflight
   if (req.method === 'OPTIONS') {
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      res.setHeader(key, value);
-    });
     return res.status(200).end();
   }
-
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
 
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
