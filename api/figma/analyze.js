@@ -151,9 +151,15 @@ Respond in this JSON format:
 
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     await pool.query(
-      `INSERT INTO screenshot_analyses (user_id, file_name, analysis_result, created_at) 
-       VALUES ($1, $2, $3, NOW())`,
-      [tokenData.user_id, frameName || 'Figma Analysis', JSON.stringify(analysisResult)]
+      `INSERT INTO screenshot_analyses (user_id, image_name, result, overall_score, standards_count, created_at) 
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [
+        tokenData.user_id, 
+        frameName || 'Figma Analysis', 
+        JSON.stringify(analysisResult),
+        analysisResult.score ? String(analysisResult.score) + '%' : null,
+        String(standards.length)
+      ]
     );
     await pool.end();
 
