@@ -1,7 +1,17 @@
 {
-  "name": "figma-api",
+  "name": "figma-api-vercel",
   "version": "1.0.0",
+  "description": "Figma plugin API for Content Standards Hub",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "vercel-build": "npm install"
+  },
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
     "@neondatabase/serverless": "^0.10.4",
     "bcryptjs": "^2.4.3"
   }
