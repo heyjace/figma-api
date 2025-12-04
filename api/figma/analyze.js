@@ -1,7 +1,15 @@
 const { Pool, neonConfig } = require('@neondatabase/serverless');
-const Anthropic = require('@anthropic-ai/sdk');
 
 neonConfig.fetchConnectionCache = true;
+
+// Lazy-load Anthropic SDK to prevent module initialization errors from breaking CORS
+let Anthropic = null;
+function getAnthropic() {
+  if (!Anthropic) {
+    Anthropic = require('@anthropic-ai/sdk');
+  }
+  return Anthropic;
+}
 
 async function verifyToken(token) {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -70,12 +78,13 @@ module.exports = async (req, res) => {
       return res.status(500).json({ message: 'No content standards found' });
     }
 
-    const anthropic = new Anthropic({
+    const AnthropicSDK = getAnthropic();
+    const anthropic = new AnthropicSDK({
       apiKey: process.env.ANTHROPIC_API_KEY
     });
 
     const standardsContext = standards.map(s => 
-      `**${s.title}** (${s.id})\n- Domain: ${s.domain}\n- Definition: ${s.definition}\n- Do: ${(s.do_examples || []).join('; ')}\n- Don't: ${(s.dont_examples || []).join('; ')}`
+      `**${s.title}** (${s.id})\n- Domain: ${s.domain}\n- Definition: ${s.term_definition || 'N/A'}\n- Guidance: ${s.guidance || 'N/A'}\n- Correct: ${s.correct_examples || 'N/A'}\n- Incorrect: ${s.incorrect_examples || 'N/A'}`
     ).join('\n\n');
 
     const textToAnalyze = textNodes && textNodes.length > 0
