@@ -8,7 +8,7 @@
     "vercel-build": "npm install"
   },
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
