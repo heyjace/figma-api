@@ -149,6 +149,43 @@ Respond in this JSON format:
       };
     }
 
+    // Transform response to match plugin UI expectations
+    const findings = [];
+    
+    // Add compliant findings
+    if (analysisResult.compliant) {
+      analysisResult.compliant.forEach(item => {
+        findings.push({
+          category: 'compliant',
+          standardTitle: item.standardTitle || 'Unknown Standard',
+          text: item.evidence || '',
+          explanation: 'This text follows the content standard.',
+          suggestion: null
+        });
+      });
+    }
+    
+    // Add violations
+    if (analysisResult.violations) {
+      analysisResult.violations.forEach(item => {
+        findings.push({
+          category: 'violation',
+          standardTitle: item.standardTitle || 'Unknown Standard',
+          text: item.text || '',
+          explanation: item.issue || 'Needs attention',
+          suggestion: item.suggestion || null
+        });
+      });
+    }
+    
+    // Create the transformed response that the plugin UI expects
+    const transformedResult = {
+      overallScore: analysisResult.score ? String(analysisResult.score) + '%' : '0%',
+      summary: analysisResult.summary || 'Analysis complete',
+      findings: findings,
+      recommendations: analysisResult.recommendations || []
+    };
+
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     await pool.query(
       `INSERT INTO screenshot_analyses (user_id, image_name, result, overall_score, standards_count, created_at) 
@@ -157,13 +194,13 @@ Respond in this JSON format:
         tokenData.user_id, 
         frameName || 'Figma Analysis', 
         JSON.stringify(analysisResult),
-        analysisResult.score ? String(analysisResult.score) + '%' : null,
+        transformedResult.overallScore,
         String(standards.length)
       ]
     );
     await pool.end();
 
-    return res.status(200).json(analysisResult);
+    return res.status(200).json(transformedResult);
   } catch (error) {
     console.error('Analysis error:', error);
     return res.status(500).json({ message: 'Analysis failed: ' + error.message });
