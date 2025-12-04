@@ -157,10 +157,12 @@ Respond in this JSON format:
       analysisResult.compliant.forEach(item => {
         findings.push({
           category: 'compliant',
+          standardId: item.standardId || null,
           standardTitle: item.standardTitle || 'Unknown Standard',
           text: item.evidence || '',
           explanation: 'This text follows the content standard.',
-          suggestion: null
+          suggestion: null,
+          relevance: 'High'
         });
       });
     }
@@ -170,17 +172,21 @@ Respond in this JSON format:
       analysisResult.violations.forEach(item => {
         findings.push({
           category: 'violation',
+          standardId: item.standardId || null,
           standardTitle: item.standardTitle || 'Unknown Standard',
           text: item.text || '',
           explanation: item.issue || 'Needs attention',
-          suggestion: item.suggestion || null
+          suggestion: item.suggestion || null,
+          relevance: 'High'
         });
       });
     }
     
-    // Create the transformed response that the plugin UI expects
+    // Create the transformed response that matches both the plugin UI and portal app expectations
+    const scoreNumber = analysisResult.score || 0;
     const transformedResult = {
-      overallScore: analysisResult.score ? String(analysisResult.score) + '%' : '0%',
+      overallScore: String(scoreNumber) + '%',
+      complianceScore: scoreNumber,
       summary: analysisResult.summary || 'Analysis complete',
       findings: findings,
       recommendations: analysisResult.recommendations || []
@@ -193,8 +199,8 @@ Respond in this JSON format:
       [
         tokenData.user_id, 
         frameName || 'Figma Analysis', 
-        JSON.stringify(analysisResult),
-        transformedResult.overallScore,
+        JSON.stringify(transformedResult),
+        String(scoreNumber),
         String(standards.length)
       ]
     );
